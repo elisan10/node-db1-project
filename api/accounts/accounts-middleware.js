@@ -1,35 +1,50 @@
+// const { intersect } = require("../../data/db-config");
 const Accounts = require("./accounts-model");
 
 exports.checkAccountPayload = (req, res, next) => {
   // DO YOUR MAGIC
-  if (!req.body.name || !req.body.budget) {
+
+  const { name, budget } = req.body;
+
+  if (!name || !budget) {
     res.status(400).json({ message: "name and budget are required" });
-  } else if (typeof req.body.name !== "string") {
+  } else if (typeof name !== "string") {
     res.status(400).json({ message: "name of account must be a string" });
-  } else if (req.body.name.length <= 3 || req.body.name.length > 100) {
+  } else if (typeof budget !== "number") {
+    res.status(400).json({ message: "budget of account must be a number" });
+  } else if (name.trim().length < 3 || name.trim().length > 100) {
     res
       .status(400)
       .json({ message: "name of account must be between 3 and 100" });
-  } else if (typeof req.body.budget !== "number") {
-    res.status(400).json({ message: "budget of account must be a number" });
-  } else if (req.body.budget < 0 || req.body.budget > 1000000) {
+  } else if (budget < 0 || budget > 1000000) {
     res
       .status(400)
       .json({ message: "budget of account is too large or too small" });
   } else {
+    req.body.name = name.trim();
     next();
   }
 };
 
 exports.checkAccountNameUnique = async (req, res, next) => {
   // DO YOUR MAGIC
-  // try {
-  //   const existingName = await Accounts.getById()
-  //   if(req.body.name = )
-  // }
-  // catch(err) {
-  //   next(err)
-  // }
+  try {
+    const existingAccounts = await Accounts.getAll();
+    const name = req.body.name.trim();
+
+    const result = existingAccounts.find((account) => {
+      if (account.name === name) {
+        return account;
+      }
+    });
+    if (result) {
+      res.status(400).json({ message: "that name is taken" });
+    } else {
+      next();
+    }
+  } catch (err) {
+    next(err);
+  }
 };
 
 exports.checkAccountId = async (req, res, next) => {
